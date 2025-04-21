@@ -54,7 +54,6 @@ interface ComponentItem {
 }
 
 const components: ComponentItem[] = [
-  // Data Components
   {
     id: "data-source",
     name: "Data Source",
@@ -117,8 +116,6 @@ const components: ComponentItem[] = [
     implementation: "imblearn",
     library: "imblearn",
   },
-
-  // Model Components
   {
     id: "sklearn-models",
     name: "Scikit-Learn Models",
@@ -225,8 +222,6 @@ const components: ComponentItem[] = [
     implementation: "transformers",
     library: "transformers",
   },
-
-  // Evaluation Components
   {
     id: "hyperparameter-tuning",
     name: "Hyperparameter Tuning",
@@ -278,8 +273,6 @@ const components: ComponentItem[] = [
     implementation: "shap",
     library: "shap",
   },
-
-  // Conditional Components
   {
     id: "conditional-split",
     name: "Conditional Split",
@@ -313,8 +306,6 @@ const components: ComponentItem[] = [
     implementation: "custom",
     library: "custom",
   },
-
-  // Deployment Components
   {
     id: "workflow",
     name: "Workflow",
@@ -389,7 +380,6 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
   }
 
   const filteredComponents = components.filter((component) => {
-    // Filter by search query
     const matchesSearch =
       searchQuery === "" ||
       component.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -398,19 +388,15 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
       component.implementation?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       component.library?.toLowerCase().includes(searchQuery.toLowerCase())
 
-    // Filter by category
     const matchesCategory = selectedCategory === "all" || component.category === selectedCategory
 
-    // Filter by view mode (simplified - in a real app you'd have actual favorites/recent data)
     if (viewMode === "favorites") {
-      // Simulate favorites - in a real app this would be user data
       return (
         matchesSearch &&
         matchesCategory &&
         ["sklearn-models", "data-preprocessing", "tensorflow-models", "huggingface-models"].includes(component.id)
       )
     } else if (viewMode === "recent") {
-      // Simulate recent - in a real app this would be user data
       return (
         matchesSearch &&
         matchesCategory &&
@@ -553,7 +539,7 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
               </div>
             </div>
 
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 overflow-y-auto">
               <TabsContent value="all" className="m-0">
                 {Object.entries(groupedComponents).length === 0 ? (
                   <div className="p-4 text-center text-muted-foreground">No components match your search</div>
@@ -742,7 +728,6 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
           </div>
         </>
       ) : (
-        // Narrow sidebar view
         <div className="flex flex-col h-full">
           <div className="border-b flex items-center justify-center p-2">
             <Button variant="ghost" size="icon" onClick={toggleSidebarWidth} className="h-9 w-9">
@@ -750,7 +735,7 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
             </Button>
           </div>
 
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 overflow-y-auto">
             <div className="flex flex-col gap-1 p-2">
               {Object.entries(groupedComponents).map(([category, items]) => (
                 <div key={category} className="mb-4">
@@ -786,4 +771,3 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
     </div>
   )
 }
-

@@ -55,7 +55,7 @@ const Sidebar = React.forwardRef<
       ref={ref}
       className="group peer hidden md:block text-sidebar-foreground"
       data-state={state}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
+      data-collapsible={collapsible}
       data-variant={variant}
       data-side={side}
     >
@@ -147,4 +147,3 @@ const SidebarContent = React.forwardRef<HTMLDivElement, React.ComponentProps<"di
 SidebarContent.displayName = "SidebarContent"
 
 export { Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarTrigger }
-

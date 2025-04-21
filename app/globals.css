@@ -98,6 +98,35 @@
   @apply bg-background border border-border rounded-md shadow-md;
 }
 
+/* Agent Sidebar Layout Fixes */
+/* The sidebar is now given a fixed width and scrolls independently */
+.agent-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  width: 20rem;
+  transition: width 0.3s;
+  z-index: 20;
+}
+
+.agent-sidebar-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--sidebar-background);
+  z-index: 30;
+}
+
+/* Main canvas now occupies remaining space and scrolls if needed */
+.main-canvas, main {
+  flex: 1 1 0%;
+  min-height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 /* Animated flow for edges */
 @keyframes flow {
   from {
@@ -137,4 +166,3 @@
 .react-flow__resize-control.handle {
   @apply bg-primary border-primary;
 }
-
