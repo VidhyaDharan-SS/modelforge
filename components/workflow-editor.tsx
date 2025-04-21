@@ -101,83 +101,79 @@ interface ModelMetrics {
 // Add this function to generate sample metrics (in a real app, these would come from an API or actual runs)
 const generateSampleMetrics = (nodeType: string): ModelMetrics | null => {
   // Only generate metrics for model nodes
-  if (!nodeType.includes('model') && !nodeType.includes('evaluation')) {
+  if (!nodeType.includes("model") && !nodeType.includes("evaluation")) {
     return null
   }
-
   // Generate random metrics based on the node type
   const baseAccuracy = Math.random() * 0.3 + 0.65 // Between 0.65 and 0.95
-  
   const metrics: ModelMetrics = {
     accuracy: parseFloat(baseAccuracy.toFixed(4)),
     precision: parseFloat((baseAccuracy - Math.random() * 0.05).toFixed(4)),
     recall: parseFloat((baseAccuracy - Math.random() * 0.08).toFixed(4)),
     f1Score: parseFloat((baseAccuracy - Math.random() * 0.06).toFixed(4)),
     auc: parseFloat((baseAccuracy + Math.random() * 0.05).toFixed(4)),
-    lossHistory: Array.from({ length: 10 }, (_, i) => parseFloat((1 - (i / 10) * 0.7).toFixed(2))),
+    lossHistory: Array.from({ length: 10 }, (_, i) =>
+      parseFloat((1 - (i / 10) * 0.7).toFixed(2))
+    ),
   }
-  
   return metrics
 }
 
 // Add a simple inline chart component for the model metrics
 const MetricsChart = ({ metrics }: { metrics: ModelMetrics }) => {
-  // Calculate max height for normalization
-  const maxValue = Math.max(...Object.values(metrics).filter(v => typeof v === 'number' && !Array.isArray(v)) as number[])
-  
-  // Calculate bar heights and widths
+  const maxValue = Math.max(
+    ...Object.values(metrics).filter(
+      (v) => typeof v === "number" && !Array.isArray(v)
+    ) as number[]
+  )
   const chartHeight = 40
-  const barWidth = 16
-  const barGap = 6
   const getBarHeight = (value: number) => (value / maxValue) * chartHeight
-  
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1">
         <LineChart className="h-3.5 w-3.5 text-primary" />
         <span className="text-xs font-medium">Model Metrics</span>
       </div>
-      
       <div className="flex items-end gap-1 h-10 mt-1 mb-1.5">
         <div className="flex flex-col items-center">
-          <div 
-            className="w-4 bg-blue-500/80 rounded-t-sm" 
+          <div
+            className="w-4 bg-blue-500/80 rounded-t-sm"
             style={{ height: `${getBarHeight(metrics.accuracy)}px` }}
           />
           <span className="text-[8px] mt-0.5">Acc</span>
         </div>
         <div className="flex flex-col items-center">
-          <div 
-            className="w-4 bg-green-500/80 rounded-t-sm" 
+          <div
+            className="w-4 bg-green-500/80 rounded-t-sm"
             style={{ height: `${getBarHeight(metrics.precision)}px` }}
           />
           <span className="text-[8px] mt-0.5">Prec</span>
         </div>
         <div className="flex flex-col items-center">
-          <div 
-            className="w-4 bg-amber-500/80 rounded-t-sm" 
+          <div
+            className="w-4 bg-amber-500/80 rounded-t-sm"
             style={{ height: `${getBarHeight(metrics.recall)}px` }}
           />
           <span className="text-[8px] mt-0.5">Rec</span>
         </div>
         <div className="flex flex-col items-center">
-          <div 
-            className="w-4 bg-purple-500/80 rounded-t-sm" 
+          <div
+            className="w-4 bg-purple-500/80 rounded-t-sm"
             style={{ height: `${getBarHeight(metrics.f1Score)}px` }}
           />
           <span className="text-[8px] mt-0.5">F1</span>
         </div>
         {metrics.auc && (
           <div className="flex flex-col items-center">
-            <div 
-              className="w-4 bg-red-500/80 rounded-t-sm" 
+            <div
+              className="w-4 bg-red-500/80 rounded-t-sm"
               style={{ height: `${getBarHeight(metrics.auc)}px` }}
             />
             <span className="text-[8px] mt-0.5">AUC</span>
           </div>
         )}
       </div>
-      
       <div className="grid grid-cols-2 gap-x-4 gap-y-1">
         <div className="flex justify-between text-[9px]">
           <span className="text-muted-foreground">Accuracy:</span>
@@ -236,10 +232,10 @@ const CustomEdge = ({
         style={{
           ...style,
           strokeWidth: highlighted ? 3 : 2,
-          stroke: highlighted ? 'var(--color-primary)' : style.stroke,
+          stroke: highlighted ? "var(--color-primary)" : style.stroke,
           animation: "flow 30s linear infinite",
           strokeDasharray: "10 5",
-          transition: 'stroke 0.2s ease, stroke-width 0.2s ease',
+          transition: "stroke 0.2s ease, stroke-width 0.2s ease",
         }}
       />
       <EdgeLabelRenderer>
@@ -249,7 +245,7 @@ const CustomEdge = ({
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: "all",
             opacity: highlighted ? 1 : 0.8,
-            transition: 'opacity 0.2s ease',
+            transition: "opacity 0.2s ease",
           }}
           className="nodrag nopan bg-background/80 backdrop-blur-sm text-xs px-2 py-1 rounded-full border shadow-sm"
         >
@@ -277,7 +273,7 @@ const BaseNodeComponent = ({
   handles?: { left?: boolean; right?: boolean }
   isResizable?: boolean
   nodeProps?: NodeProps
-  status?: PipelineResult['status'] | null
+  status?: PipelineResult["status"] | null
   onViewNodeHistory?: (nodeId: string) => void
 }) => {
   const { theme } = useTheme()
@@ -300,7 +296,6 @@ const BaseNodeComponent = ({
   }
 
   const handleDuplicate = () => {
-    // Implementation would be handled by the parent component
     toast({
       title: "Node duplicated",
       description: `Created a copy of ${nodeName}`,
@@ -313,12 +308,9 @@ const BaseNodeComponent = ({
       title: "Running node",
       description: `Executing ${nodeName}...`,
     })
-
-    // Simulate processing
     setTimeout(() => {
       setIsRunning(false)
-      // Generate metrics if this is a model node
-      if (type && (type.includes('model') || type.includes('evaluation'))) {
+      if (type && (type.includes("model") || type.includes("evaluation"))) {
         const newMetrics = generateSampleMetrics(type)
         setMetrics(newMetrics)
         setShowMetrics(true)
@@ -350,7 +342,6 @@ const BaseNodeComponent = ({
     if (showMetrics) {
       setShowMetrics(false)
     } else {
-      // Generate metrics if not already available
       if (!metrics && type) {
         const newMetrics = generateSampleMetrics(type)
         setMetrics(newMetrics)
@@ -359,17 +350,15 @@ const BaseNodeComponent = ({
     }
   }
 
-  // Check if this node type can have metrics
-  const canShowMetrics = type && (type.includes('model') || type.includes('evaluation'))
+  const canShowMetrics = type && (type.includes("model") || type.includes("evaluation"))
 
-  // Helper function to get status icon
   const getStatusIcon = () => {
     switch (status) {
-      case 'success':
+      case "success":
         return <CheckCircle2 className="h-3 w-3 text-green-500" />
-      case 'warning':
+      case "warning":
         return <AlertTriangle className="h-3 w-3 text-yellow-500" />
-      case 'error':
+      case "error":
         return <XCircle className="h-3 w-3 text-red-500" />
       default:
         return null
@@ -381,7 +370,12 @@ const BaseNodeComponent = ({
       <NodeToolbar className="flex bg-background border rounded-md shadow-sm p-1 gap-1">
         {isEditing ? (
           <div className="flex items-center gap-1">
-            <Input value={nodeName} onChange={(e) => setNodeName(e.target.value)} className="h-7 text-xs" autoFocus />
+            <Input
+              value={nodeName}
+              onChange={(e) => setNodeName(e.target.value)}
+              className="h-7 text-xs"
+              autoFocus
+            />
             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSaveLabel}>
               <Check className="h-3 w-3" />
             </Button>
@@ -394,7 +388,12 @@ const BaseNodeComponent = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setIsEditing(true)}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    onClick={() => setIsEditing(true)}
+                  >
                     <Edit className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
@@ -447,9 +446,9 @@ const BaseNodeComponent = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
+                    <Button
+                      size="icon"
+                      variant="ghost"
                       className={cn("h-7 w-7", showMetrics && "bg-primary/10")}
                       onClick={handleToggleMetrics}
                     >
@@ -466,7 +465,12 @@ const BaseNodeComponent = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={handleDelete}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-destructive"
+                    onClick={handleDelete}
+                  >
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
@@ -504,7 +508,7 @@ const BaseNodeComponent = ({
         </NodeToolbar>
       )}
 
-      {isResizable ? (
+      {isResizable && (
         <NodeResizer
           minWidth={180}
           minHeight={100}
@@ -512,14 +516,14 @@ const BaseNodeComponent = ({
           lineClassName="border-primary"
           handleClassName="h-3 w-3 bg-primary border-primary"
         />
-      ) : null}
+      )}
 
       <Card
         className={cn(
           "w-48 transition-all duration-200 group relative",
           selected ? "ring-2 ring-primary shadow-lg" : "shadow-sm",
           isRunning && "animate-pulse",
-          isHidden && "opacity-50",
+          isHidden && "opacity-50"
         )}
       >
         {status && (
@@ -529,9 +533,9 @@ const BaseNodeComponent = ({
                 <div
                   className={cn(
                     "absolute -top-1.5 -right-1.5 h-3.5 w-3.5 rounded-full border-2 border-background flex items-center justify-center",
-                    status === 'success' && "bg-green-500",
-                    status === 'warning' && "bg-yellow-500",
-                    status === 'error' && "bg-red-500",
+                    status === "success" && "bg-green-500",
+                    status === "warning" && "bg-yellow-500",
+                    status === "error" && "bg-red-500"
                   )}
                 >
                   {/* Optionally add a smaller icon inside */}
@@ -572,7 +576,6 @@ const BaseNodeComponent = ({
             className="w-3 h-3 bg-primary border-2 border-background transition-all group-hover:w-4 group-hover:h-4 z-10"
           />
         )}
-        {/* Conditional Output Handle */}
       </Card>
     </>
   )
@@ -835,20 +838,17 @@ const edgeTypes = {
   custom: CustomEdge,
 }
 
-// Updated function to provide more thoughtful recommendations
+// Updated function to provide recommendations
 const getNodeRecommendations = (
   selectedNodeId: string | null,
   nodes: Node[],
   edges: Edge[]
 ): { type: string; reason: string; insertBefore?: string }[] => {
   if (!selectedNodeId) return []
-
-  const selectedNode = nodes.find(n => n.id === selectedNodeId)
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId)
   if (!selectedNode || !selectedNode.type) return []
 
   const selectedNodeType = selectedNode.type
-
-  // --- Basic Recommendation Rules (Next Steps) ---
   const nextStepRules: Record<string, { types: string[]; reasons: string[] }> = {
     "data-source": {
       types: ["data-preprocessing", "feature-engineering"],
@@ -895,51 +895,50 @@ const getNodeRecommendations = (
       types: ["model-evaluation", "model-versioning"],
       reasons: ["Evaluate tuned model performance", "Version best performing model"],
     },
-    // Add more rules for other node types
   }
 
-  // --- Contextual Recommendation Logic (Filling Gaps) ---
   let contextualRecommendations: { type: string; reason: string; insertBefore?: string }[] = []
-
-  // Example: If a data source is connected directly to a model, suggest preprocessing
-  if (selectedNodeType === 'data-source') {
+  if (selectedNodeType === "data-source") {
     const downstreamNodes = edges
-      .filter(e => e.source === selectedNodeId)
-      .map(e => nodes.find(n => n.id === e.target))
-      .filter((n): n is Node => !!n) // Type guard to filter out undefined
-
-    downstreamNodes.forEach(targetNode => {
-      if (targetNode.type && targetNode.type.includes('model')) {
-        if (!nodes.some(n => n.type === 'data-preprocessing' && edges.some(e => e.source === selectedNodeId && e.target === n.id) && edges.some(e => e.source === n.id && e.target === targetNode.id))) {
+      .filter((e) => e.source === selectedNodeId)
+      .map((e) => nodes.find((n) => n.id === e.target))
+      .filter((n): n is Node => !!n)
+    downstreamNodes.forEach((targetNode) => {
+      if (targetNode.type && targetNode.type.includes("model")) {
+        if (
+          !nodes.some(
+            (n) =>
+              n.type === "data-preprocessing" &&
+              edges.some((e) => e.source === selectedNodeId && e.target === n.id) &&
+              edges.some((e) => e.source === n.id && e.target === targetNode.id)
+          )
+        )
           contextualRecommendations.push({
-            type: 'data-preprocessing',
-            reason: 'Preprocess data before training model',
+            type: "data-preprocessing",
+            reason: "Preprocess data before training model",
             insertBefore: targetNode.id,
           })
-        }
       }
     })
   }
 
-  // Example: If preprocessing is connected to deployment, suggest model training/evaluation
-  if (selectedNodeType.includes('preprocessing') || selectedNodeType.includes('feature')) {
+  if (selectedNodeType.includes("preprocessing") || selectedNodeType.includes("feature")) {
     const downstreamNodes = edges
-      .filter(e => e.source === selectedNodeId)
-      .map(e => nodes.find(n => n.id === e.target))
+      .filter((e) => e.source === selectedNodeId)
+      .map((e) => nodes.find((n) => n.id === e.target))
       .filter((n): n is Node => !!n)
-
-    downstreamNodes.forEach(targetNode => {
-      if (targetNode.type && targetNode.type.includes('deployment')) {
-        // Check if a model node exists between selected and target
-        const hasIntermediateModel = nodes.some(n => 
-          n.type?.includes('model') &&
-          edges.some(e => e.source === selectedNodeId && e.target === n.id) &&
-          edges.some(e => e.source === n.id && e.target === targetNode.id)
+    downstreamNodes.forEach((targetNode) => {
+      if (targetNode.type && targetNode.type.includes("deployment")) {
+        const hasIntermediateModel = nodes.some(
+          (n) =>
+            n.type?.includes("model") &&
+            edges.some((e) => e.source === selectedNodeId && e.target === n.id) &&
+            edges.some((e) => e.source === n.id && e.target === targetNode.id)
         )
         if (!hasIntermediateModel) {
           contextualRecommendations.push({
-            type: 'sklearn-models', // Suggest a common model type
-            reason: 'Train a model before deployment',
+            type: "sklearn-models",
+            reason: "Train a model before deployment",
             insertBefore: targetNode.id,
           })
         }
@@ -947,36 +946,29 @@ const getNodeRecommendations = (
     })
   }
 
-  // --- Combine and Filter Recommendations ---
-
-  // Get basic next step recommendations
-  const basicRecommendations = (nextStepRules[selectedNodeType] || { types: [], reasons: [] })
+  const basicRecommendations = nextStepRules[selectedNodeType] || { types: [], reasons: [] }
   const connectedNodeTypes = edges
-    .filter(edge => edge.source === selectedNodeId)
-    .map(edge => nodes.find(n => n.id === edge.target)?.type)
-    .filter((type): type is string => !!type) // Filter out undefined/null types
-
+    .filter((edge) => edge.source === selectedNodeId)
+    .map((edge) => nodes.find((n) => n.id === edge.target)?.type)
+    .filter((type): type is string => !!type)
   const filteredBasicRecs = basicRecommendations.types
-    .filter(type => !connectedNodeTypes.includes(type))
+    .filter((type) => !connectedNodeTypes.includes(type))
     .map((type, index) => ({
       type,
       reason: basicRecommendations.reasons[index] || "Next step in pipeline",
     }))
-
-  // Combine contextual and basic recommendations, prioritizing contextual ones
   const allRecommendations = [...contextualRecommendations, ...filteredBasicRecs]
-
-  // Remove duplicates (preferring contextual if type is the same)
-  const uniqueRecommendations = allRecommendations.reduce((acc, current) => {
-    const x = acc.find(item => item.type === current.type)
-    if (!x) {
-      return acc.concat([current])
-    }
+  const uniqueRecommendations = allRecommendations.reduce(
+    (acc, current) => {
+      const x = acc.find((item) => item.type === current.type)
+      if (!x) {
+        return acc.concat([current])
+      }
       return acc
-    
-  }, [] as { type: string; reason: string; insertBefore?: string }[])
-
-  return uniqueRecommendations.slice(0, 4) // Limit to top 4 recommendations
+    },
+    [] as { type: string; reason: string; insertBefore?: string }[]
+  )
+  return uniqueRecommendations.slice(0, 4)
 }
 
 // Replace the WorkflowEditor component implementation with this fixed version:
@@ -997,9 +989,9 @@ export const WorkflowEditor = ({
   const { theme } = useTheme()
 
   return (
-    <div 
-      className="flex-1 h-full w-full min-h-[500px] relative overflow-hidden" 
-      style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}
+    <div
+      className="flex-1 h-full w-full min-h-[500px] relative overflow-hidden"
+      style={{ flex: "1 1 auto", display: "flex", flexDirection: "column" }}
       ref={reactFlowWrapper}
     >
       <ReactFlowProvider>
@@ -1023,7 +1015,6 @@ export const WorkflowEditor = ({
   )
 }
 
-// Create a new internal component that uses React Flow hooks safely inside the provider
 interface WorkflowEditorContentProps {
   reactFlowWrapper: React.RefObject<HTMLDivElement | null>
   onNodeSelect: (nodeId: string | null) => void
@@ -1058,82 +1049,115 @@ const WorkflowEditorContent = ({
   const [nodes, setNodes, onNodesChange] = useNodesState(externalNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(externalEdges)
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null)
-  const [selectedElements, setSelectedElements] = useState<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] })
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId?: string } | null>(null)
+  const [selectedElements, setSelectedElements] = useState<{ nodes: Node[]; edges: Edge[] }>({
+    nodes: [],
+    edges: [],
+  })
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId?: string } | null>(
+    null
+  )
   const { project } = useReactFlow()
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
   const [containerInitialized, setContainerInitialized] = useState(false)
+  const [gridVisible, setGridVisible] = useState(true)
 
-  // Fix for the layout issue - ensure ReactFlow container properly initializes
+  // Extra Feature: Export Pipeline
+  const handleExportPipeline = useCallback(() => {
+    const data = { nodes, edges }
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "pipeline.json"
+    a.click()
+    URL.revokeObjectURL(url)
+    toast({ title: "Exported", description: "Pipeline exported as JSON file" })
+  }, [nodes, edges, toast])
+
+  // Extra Feature: Clear Pipeline
+  const handleClearPipeline = useCallback(() => {
+    if (confirm("Are you sure you want to clear the pipeline? This action cannot be undone.")) {
+      setNodes([])
+      setEdges([])
+      toast({ title: "Pipeline cleared", description: "All nodes and connections removed." })
+    }
+  }, [setNodes, setEdges, toast])
+
+  // Extra Feature: Reset View
+  const handleResetView = useCallback(() => {
+    if (reactFlowInstance) {
+      reactFlowInstance.fitView({ padding: 0.2 })
+      toast({ title: "View reset", description: "Canvas view has been reset." })
+    }
+  }, [reactFlowInstance, toast])
+
+  // Extra Feature: Zoom In and Zoom Out
+  const handleZoomIn = useCallback(() => {
+    if (reactFlowInstance) {
+      reactFlowInstance.zoomIn()
+    }
+  }, [reactFlowInstance])
+  const handleZoomOut = useCallback(() => {
+    if (reactFlowInstance) {
+      reactFlowInstance.zoomOut()
+    }
+  }, [reactFlowInstance])
+
+  // Extra Feature: Toggle Grid visibility
+  const handleToggleGrid = useCallback(() => {
+    setGridVisible((prev) => !prev)
+  }, [])
+
   useEffect(() => {
-    if (!reactFlowWrapper.current || !reactFlowInstance) return;
-
-    // Use ResizeObserver to detect container size changes
+    if (!reactFlowWrapper.current || !reactFlowInstance) return
     const resizeObserver = new ResizeObserver(() => {
       if (reactFlowInstance) {
-        // Immediately update the flow
-        reactFlowInstance.fitView({ padding: 0.2 });
-        
-        // Force a second update after a small delay to ensure everything is properly laid out
+        reactFlowInstance.fitView({ padding: 0.2 })
         setTimeout(() => {
-          reactFlowInstance.fitView({ padding: 0.2 });
-          setContainerInitialized(true);
-        }, 300);
+          reactFlowInstance.fitView({ padding: 0.2 })
+          setContainerInitialized(true)
+        }, 300)
       }
-    });
-
-    // Start observing
-    resizeObserver.observe(reactFlowWrapper.current);
-
-    // Cleanup function
+    })
+    resizeObserver.observe(reactFlowWrapper.current)
     return () => {
       if (reactFlowWrapper.current) {
-        resizeObserver.unobserve(reactFlowWrapper.current);
+        resizeObserver.unobserve(reactFlowWrapper.current)
       }
-    };
-  }, [reactFlowInstance, reactFlowWrapper]);
+    }
+  }, [reactFlowInstance, reactFlowWrapper])
 
-  // Trigger a layout adjustment when nodes change if container is initialized
   useEffect(() => {
     if (containerInitialized && reactFlowInstance && nodes.length > 0) {
-      reactFlowInstance.fitView({ padding: 0.2 });
+      reactFlowInstance.fitView({ padding: 0.2 })
     }
-  }, [containerInitialized, nodes, reactFlowInstance]);
+  }, [containerInitialized, nodes, reactFlowInstance])
 
-  // When ReactFlow initializes, fit the view
   const onInit = useCallback((instance: any) => {
-    setReactFlowInstance(instance);
-    
-    // Force a double fitView to ensure proper layout
+    setReactFlowInstance(instance)
     setTimeout(() => {
-      instance.fitView({ padding: 0.2 });
-      
-      // Second fit view after a small delay
+      instance.fitView({ padding: 0.2 })
       setTimeout(() => {
-        instance.fitView({ padding: 0.2 });
-      }, 250);
-    }, 100);
-  }, []);
+        instance.fitView({ padding: 0.2 })
+      }, 250)
+    }, 100)
+  }, [])
 
-  // Sync external changes TO internal state
   useEffect(() => {
-    // Only update if the external nodes are different from the internal ones
-    // Basic length check first for performance
     if (externalNodes.length !== nodes.length || JSON.stringify(externalNodes) !== JSON.stringify(nodes)) {
-       setNodes(externalNodes)
+      setNodes(externalNodes)
     }
   }, [externalNodes, setNodes])
 
   useEffect(() => {
-    // Only update if the external edges are different from the internal ones
     if (externalEdges.length !== edges.length || JSON.stringify(externalEdges) !== JSON.stringify(edges)) {
       setEdges(externalEdges)
     }
   }, [externalEdges, setEdges])
 
-  // Update nodes with status from results
   useEffect(() => {
-    const statusMap = new Map(pipelineResults.map(r => [r.nodeId, r.status]))
+    const statusMap = new Map(pipelineResults.map((r) => [r.nodeId, r.status]))
     setNodes((nds) =>
       nds.map((node) => ({
         ...node,
@@ -1142,18 +1166,20 @@ const WorkflowEditorContent = ({
     )
   }, [pipelineResults, setNodes])
 
-  // Keyboard shortcuts
   const deletePressed = useKeyPress("Delete")
   const copyPressed = useKeyPress(["Meta+c", "Ctrl+c"])
   const pastePressed = useKeyPress(["Meta+v", "Ctrl+v"])
   const undoPressed = useKeyPress(["Meta+z", "Ctrl+z"])
   const redoPressed = useKeyPress(["Meta+Shift+z", "Ctrl+Shift+z"])
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     if (deletePressed && selectedElements.nodes.length > 0) {
-      setNodes((nds) => nds.filter((node) => !selectedElements.nodes.some((n) => n.id === node.id)))
-      setEdges((eds) => eds.filter((edge) => !selectedElements.edges.some((e) => e.id === edge.id)))
+      setNodes((nds) =>
+        nds.filter((node) => !selectedElements.nodes.some((n) => n.id === node.id))
+      )
+      setEdges((eds) =>
+        eds.filter((edge) => !selectedElements.edges.some((e) => e.id === edge.id))
+      )
       toast({
         title: "Elements deleted",
         description: `Removed ${selectedElements.nodes.length} nodes and ${selectedElements.edges.length} edges`,
@@ -1163,12 +1189,9 @@ const WorkflowEditorContent = ({
 
   const onConnect = useCallback(
     (params: Connection) => {
-      // Check if connection is valid
       const sourceNode = nodes.find((node) => node.id === params.source)
       const targetNode = nodes.find((node) => node.id === params.target)
-
       if (sourceNode && targetNode) {
-        // Get edge label based on node types
         const getEdgeLabel = () => {
           if (sourceNode.type === "data-source" && targetNode.type?.includes("preprocessing")) {
             return "raw data"
@@ -1185,9 +1208,7 @@ const WorkflowEditorContent = ({
           return "data flow"
         }
 
-        // Special handling for conditional nodes
         if (sourceNode.type === "conditional-split" && params.sourceHandle === "bottom") {
-          // Set edge style for false path
           setEdges((eds) =>
             addEdge(
               {
@@ -1206,11 +1227,10 @@ const WorkflowEditorContent = ({
                   condition: "false path",
                 },
               },
-              eds,
-            ),
+              eds
+            )
           )
         } else if (sourceNode.type === "conditional-split") {
-          // Set edge style for true path
           setEdges((eds) =>
             addEdge(
               {
@@ -1229,11 +1249,10 @@ const WorkflowEditorContent = ({
                   condition: "true path",
                 },
               },
-              eds,
-            ),
+              eds
+            )
           )
         } else {
-          // Regular connection
           setEdges((eds) =>
             addEdge(
               {
@@ -1251,18 +1270,20 @@ const WorkflowEditorContent = ({
                   label: getEdgeLabel(),
                 },
               },
-              eds,
-            ),
+              eds
+            )
           )
         }
 
         toast({
           title: "Connection created",
-          description: `Connected ${sourceNode.data.label || sourceNode.type} to ${targetNode.data.label || targetNode.type}`,
+          description: `Connected ${sourceNode.data.label || sourceNode.type} to ${
+            targetNode.data.label || targetNode.type
+          }`,
         })
       }
     },
-    [nodes, theme, toast, setEdges],
+    [nodes, theme, toast, setEdges]
   )
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -1273,49 +1294,43 @@ const WorkflowEditorContent = ({
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault()
-
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect()
       const type = event.dataTransfer.getData("application/reactflow")
-
       if (!type || !reactFlowBounds || !reactFlowInstance) {
         return
       }
-
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       })
-
       const newNode: Node = {
         id: `${type}-${Date.now()}`,
         type,
         position,
         data: { label: `${type.charAt(0).toUpperCase() + type.slice(1).replace(/-/g, " ")}` },
       }
-
       setNodes((nds) => nds.concat(newNode))
-
       toast({
         title: "Component added",
         description: `Added ${type.replace(/-/g, " ")} to the pipeline`,
       })
     },
-    [reactFlowInstance, setNodes, toast],
+    [reactFlowInstance, setNodes, toast]
   )
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
-  const [nodeRecommendations, setNodeRecommendations] = useState<{ type: string; reason: string; insertBefore?: string }[]>([])
+  const [nodeRecommendations, setNodeRecommendations] = useState<
+    { type: string; reason: string; insertBefore?: string }[]
+  >([])
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       onNodeSelect(node.type || null)
       setSelectedNodeId(node.id)
-
-      // Generate recommendations based on selected node and context
       const recommendations = getNodeRecommendations(node.id, nodes, edges)
       setNodeRecommendations(recommendations)
     },
-    [onNodeSelect, nodes, edges] // Ensure nodes and edges are dependencies
+    [onNodeSelect, nodes, edges]
   )
 
   const onPaneClick = useCallback(() => {
@@ -1331,10 +1346,7 @@ const WorkflowEditorContent = ({
 
   const onNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: Node) => {
-      // Prevent native context menu from showing
       event.preventDefault()
-
-      // Calculate position of the context menu
       const pane = reactFlowWrapper.current
       if (pane) {
         const { left, top } = pane.getBoundingClientRect()
@@ -1345,7 +1357,7 @@ const WorkflowEditorContent = ({
         })
       }
     },
-    [reactFlowWrapper],
+    [reactFlowWrapper]
   )
 
   const onPaneContextMenu = useCallback(
@@ -1360,7 +1372,7 @@ const WorkflowEditorContent = ({
         })
       }
     },
-    [reactFlowWrapper],
+    [reactFlowWrapper]
   )
 
   const handleDeleteNode = useCallback(
@@ -1372,7 +1384,7 @@ const WorkflowEditorContent = ({
         description: "Node removed from the pipeline",
       })
     },
-    [setNodes, toast],
+    [setNodes, toast]
   )
 
   const handleDuplicateNode = useCallback(
@@ -1395,7 +1407,7 @@ const WorkflowEditorContent = ({
         })
       }
     },
-    [nodes, setNodes, toast],
+    [nodes, setNodes, toast]
   )
 
   const handleAddNode = useCallback(
@@ -1413,45 +1425,36 @@ const WorkflowEditorContent = ({
         description: `Added ${type.replace(/-/g, " ")} to the pipeline`,
       })
     },
-    [setNodes, toast],
+    [setNodes, toast]
   )
 
   const handleAddRecommendedNode = useCallback(
     (type: string, insertBefore?: string) => {
       if (!selectedNodeId) return
-
-      const sourceNode = nodes.find(node => node.id === selectedNodeId)
+      const sourceNode = nodes.find((node) => node.id === selectedNodeId)
       if (!sourceNode) return
-
       let newNodePosition: { x: number; y: number }
       let targetNodeId: string | null = null
       let targetHandle: string | null = null
       let sourceHandle: string | null = null
-
-      // If inserting before a specific node
       if (insertBefore) {
-        const targetNode = nodes.find(node => node.id === insertBefore)
+        const targetNode = nodes.find((node) => node.id === insertBefore)
         if (targetNode) {
-          // Position the new node between source and target
           newNodePosition = {
             x: (sourceNode.position.x + targetNode.position.x) / 2,
             y: (sourceNode.position.y + targetNode.position.y) / 2,
           }
           targetNodeId = targetNode.id
-          targetHandle = 'left' // New node connects to target's left
-          sourceHandle = 'right' // Source node connects to new node's left
+          targetHandle = "left"
+          sourceHandle = "right"
         } else {
-          // Fallback if target node not found (shouldn't happen)
           newNodePosition = { x: sourceNode.position.x + 250, y: sourceNode.position.y }
-          sourceHandle = 'right'
+          sourceHandle = "right"
         }
       } else {
-        // Standard append to the right
         newNodePosition = { x: sourceNode.position.x + 250, y: sourceNode.position.y }
-        sourceHandle = 'right'
+        sourceHandle = "right"
       }
-
-      // Add the new node
       const newNode: Node = {
         id: `${type}-${Date.now()}`,
         type,
@@ -1459,72 +1462,61 @@ const WorkflowEditorContent = ({
         data: { label: `${type.charAt(0).toUpperCase() + type.slice(1).replace(/-/g, " ")}` },
       }
       const newNodeId = newNode.id
-
-      // --- Update Edges --- 
       let updatedEdges = edges
-      
-      // If inserting, remove the old edge between source and target
       if (insertBefore) {
-        updatedEdges = edges.filter(edge => !(edge.source === selectedNodeId && edge.target === insertBefore))
+        updatedEdges = edges.filter(
+          (edge) => !(edge.source === selectedNodeId && edge.target === insertBefore)
+        )
       }
-      
       setNodes((nds) => [...nds, newNode])
       setEdges(updatedEdges)
-
-      // Connect source to new node
       setTimeout(() => {
         onConnect({
           source: selectedNodeId,
           target: newNodeId,
-          sourceHandle: sourceHandle || 'right',
-          targetHandle: 'left',
+          sourceHandle: sourceHandle || "right",
+          targetHandle: "left",
         })
-
-        // If inserting, connect new node to target node
         if (insertBefore && targetNodeId) {
           onConnect({
             source: newNodeId,
             target: targetNodeId,
-            sourceHandle: 'right',
-            targetHandle: targetHandle || 'left',
+            sourceHandle: "right",
+            targetHandle: targetHandle || "left",
           })
         }
-      }, 100) // Delay to ensure node is rendered
-
+      }, 100)
       toast({
         title: "Node added",
-        description: `Added recommended ${type.replace(/-/g, " ")} node${insertBefore ? ' and reconnected' : ' and connected'}`,
+        description: `Added recommended ${type.replace(/-/g, " ")} node${
+          insertBefore ? " and reconnected" : " and connected"
+        }`,
       })
-      
-      // Refresh recommendations
       setTimeout(() => {
-        const recommendations = getNodeRecommendations(selectedNodeId, [...nodes, newNode], updatedEdges) // Use potentially updated state
+        const recommendations = getNodeRecommendations(
+          selectedNodeId,
+          [...nodes, newNode],
+          updatedEdges
+        )
         setNodeRecommendations(recommendations)
       }, 200)
     },
-    [selectedNodeId, nodes, edges, setNodes, setEdges, onConnect, toast] // Added setEdges
+    [selectedNodeId, nodes, edges, setNodes, setEdges, onConnect, toast]
   )
 
-  // Fit view when sidebar collapses/expands
   useEffect(() => {
     if (reactFlowInstance) {
       setTimeout(() => {
         reactFlowInstance.fitView({ padding: 0.2 })
-      }, 300) // Wait for sidebar animation to complete
+      }, 300)
     }
   }, [leftSidebarOpen, rightSidebarOpen, reactFlowInstance])
 
-  // Add a function to auto-layout the nodes
   const autoLayoutNodes = useCallback(() => {
     if (nodes.length === 0) return
-
     const HORIZONTAL_SPACING = 250
     const VERTICAL_SPACING = 150
-
-    // Group nodes by type or category to create "layers"
     const nodesByType: Record<string, Node[]> = {}
-
-    // Categorize nodes
     nodes.forEach((node) => {
       const type = node.type || "default"
       if (!nodesByType[type]) {
@@ -1532,8 +1524,6 @@ const WorkflowEditorContent = ({
       }
       nodesByType[type].push(node)
     })
-
-    // Define the layer order
     const layerOrder = [
       "data-source",
       "data-preprocessing",
@@ -1565,19 +1555,12 @@ const WorkflowEditorContent = ({
       "model-monitoring",
       "model-versioning",
     ]
-
-    // Initialize positions
     let xPosition = 100
-
-    // Position nodes by layer
     layerOrder.forEach((layerType) => {
       if (nodesByType[layerType] && nodesByType[layerType].length > 0) {
         const layerNodes = nodesByType[layerType]
-
-        // Position nodes vertically within the layer
         layerNodes.forEach((node, index) => {
           const yPosition = 100 + index * VERTICAL_SPACING
-
           setNodes((nds) =>
             nds.map((n) => {
               if (n.id === node.id) {
@@ -1587,28 +1570,21 @@ const WorkflowEditorContent = ({
                 }
               }
               return n
-            }),
+            })
           )
         })
-
-        // Move to the next horizontal position for the next layer
         xPosition += HORIZONTAL_SPACING
       }
     })
-
-    // Handle any remaining nodes not in the defined layers
     const processedNodeIds = new Set(
       Object.values(nodesByType)
         .flat()
-        .map((n) => n.id),
+        .map((n) => n.id)
     )
-
     const remainingNodes = nodes.filter((n) => !processedNodeIds.has(n.id))
-
     if (remainingNodes.length > 0) {
       remainingNodes.forEach((node, index) => {
         const yPosition = 100 + index * VERTICAL_SPACING
-
         setNodes((nds) =>
           nds.map((n) => {
             if (n.id === node.id) {
@@ -1618,12 +1594,10 @@ const WorkflowEditorContent = ({
               }
             }
             return n
-          }),
+          })
         )
       })
     }
-
-    // After positioning all nodes, fit the view to show everything
     setTimeout(() => {
       if (reactFlowInstance) {
         reactFlowInstance.fitView({ padding: 0.2 })
@@ -1631,9 +1605,7 @@ const WorkflowEditorContent = ({
     }, 100)
   }, [nodes, setNodes, reactFlowInstance])
 
-  // Add after the component definition
   useEffect(() => {
-    // Fix initial layout
     if (reactFlowInstance) {
       setTimeout(() => {
         reactFlowInstance.fitView({ padding: 0.2 })
@@ -1641,7 +1613,6 @@ const WorkflowEditorContent = ({
     }
   }, [reactFlowInstance])
 
-  // Add hover handlers for edge highlighting
   const onNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
     setHoveredNodeId(node.id)
   }, [])
@@ -1650,12 +1621,11 @@ const WorkflowEditorContent = ({
     setHoveredNodeId(null)
   }, [])
 
-  // Apply highlighting to edges
   const highlightedEdges = useMemo(() => {
     if (!hoveredNodeId) return edges
-    return edges.map(edge => ({
+    return edges.map((edge) => ({
       ...edge,
-      data: { ...edge.data, highlighted: edge.source === hoveredNodeId || edge.target === hoveredNodeId }
+      data: { ...edge.data, highlighted: edge.source === hoveredNodeId || edge.target === hoveredNodeId },
     }))
   }, [edges, hoveredNodeId])
 
@@ -1697,33 +1667,55 @@ const WorkflowEditorContent = ({
       className="bg-slate-50 dark:bg-slate-900/50"
       connectionRadius={25}
     >
-      <Background color={theme === "dark" ? "#334155" : "#cbd5e1"} gap={20} size={1} variant={BackgroundVariant.Dots} />
+      <Background
+        color={theme === "dark" ? "#334155" : "#cbd5e1"}
+        gap={20}
+        size={1}
+        variant={BackgroundVariant.Dots}
+      />
       <Controls className="bg-background border shadow-md rounded-md overflow-hidden" showInteractive={false} />
       <MiniMap
         className="bg-background border shadow-md rounded-md overflow-hidden"
         nodeColor={(node) => {
           const status = node.data?.status
-          if (status === 'error') return theme === 'dark' ? '#ef4444' : '#dc2626'
-          if (status === 'warning') return theme === 'dark' ? '#f59e0b' : '#f97316'
-          if (status === 'success') return theme === 'dark' ? '#22c55e' : '#16a34a'
+          if (status === "error") return theme === "dark" ? "#ef4444" : "#dc2626"
+          if (status === "warning") return theme === "dark" ? "#f59e0b" : "#f97316"
+          if (status === "success") return theme === "dark" ? "#22c55e" : "#16a34a"
           return theme === "dark" ? "#475569" : "#e2e8f0"
         }}
         maskColor={theme === "dark" ? "rgba(15, 23, 42, 0.7)" : "rgba(241, 245, 249, 0.7)"}
       />
 
       <Panel position="top-left" className="bg-background/80 backdrop-blur-sm p-2 rounded-md border shadow-sm m-4">
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <Badge variant="outline" className="font-normal">
             {nodes.length} Nodes
           </Badge>
           <Badge variant="outline" className="font-normal">
             {edges.length} Connections
           </Badge>
-
           <Button variant="outline" size="sm" onClick={autoLayoutNodes} className="h-7 text-xs">
             Auto-layout
           </Button>
-
+          {/* Extra Features Buttons */}
+          <Button variant="outline" size="sm" onClick={handleExportPipeline} className="h-7 text-xs">
+            Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleClearPipeline} className="h-7 text-xs">
+            Clear
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleResetView} className="h-7 text-xs">
+            Reset View
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleZoomIn} className="h-7 text-xs">
+            Zoom In
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleZoomOut} className="h-7 text-xs">
+            Zoom Out
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleToggleGrid} className="h-7 text-xs">
+            Toggle Grid
+          </Button>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1736,7 +1728,7 @@ const WorkflowEditorContent = ({
                   <p>Drag components from the sidebar</p>
                   <p>Connect nodes by dragging between handles</p>
                   <p>Right-click for context menu</p>
-                  <p>Delete: Del, Copy: Ctrl+C, Paste: Ctrl+V</p>
+                  <p>Keyboard: Delete, Ctrl+C, Ctrl+V, etc.</p>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -1752,8 +1744,8 @@ const WorkflowEditorContent = ({
               <span>Recommended Nodes</span>
             </div>
             <div className="text-xs text-muted-foreground mb-2">
-              {nodeRecommendations.some(r => r.insertBefore) 
-                ? "Suggestions based on pipeline context (click to insert)" 
+              {nodeRecommendations.some((r) => r.insertBefore)
+                ? "Suggestions based on pipeline context (click to insert)"
                 : "Suggested next steps (click to add and connect)"}
             </div>
             <div className="space-y-2">
@@ -1777,8 +1769,8 @@ const WorkflowEditorContent = ({
                     </TooltipTrigger>
                     <TooltipContent side="left">
                       <p className="text-xs">
-                        {rec.insertBefore 
-                          ? `Insert ${rec.type.replace(/-/g, " ")} before target node` 
+                        {rec.insertBefore
+                          ? `Insert ${rec.type.replace(/-/g, " ")} before target node`
                           : `Add ${rec.type.replace(/-/g, " ")} after selected node`}
                       </p>
                     </TooltipContent>
@@ -1888,43 +1880,32 @@ const WorkflowEditorContent = ({
 }
 
 const MiniPipelineMap = () => {
-  // Access nodes and edges directly from the state object
   const nodes = useStore((state: any) => state.nodes) as Node[]
   const edges = useStore((state: any) => state.edges) as Edge[]
-  
   if (!nodes || nodes.length === 0 || !edges) {
     return null
   }
-
-  // Build an adjacency map of connected nodes
   const connectedNodes = new Set<string>()
   edges.forEach((edge: Edge) => {
     connectedNodes.add(edge.source)
     connectedNodes.add(edge.target)
   })
-
-  // Filter to only show connected nodes
   const visibleNodes = nodes.filter((node: Node) => connectedNodes.has(node.id))
-
   return (
     <div className="fixed bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-md shadow-md z-10">
       <div className="text-xs text-muted-foreground mb-1 font-medium text-center">Pipeline Overview</div>
       <div className="w-48 h-24 bg-slate-50 dark:bg-slate-900/50 relative rounded overflow-hidden border">
         {visibleNodes.map((node: Node) => {
-          // Calculate relative position
           const minX = Math.min(...visibleNodes.map((n: Node) => n.position.x))
           const maxX = Math.max(...visibleNodes.map((n: Node) => n.position.x + (n.width || 150)))
           const minY = Math.min(...visibleNodes.map((n: Node) => n.position.y))
           const maxY = Math.max(...visibleNodes.map((n: Node) => n.position.y + (n.height || 40)))
-
           const width = maxX - minX || 1
           const height = maxY - minY || 1
-
           const relX = ((node.position.x - minX) / width) * 100
           const relY = ((node.position.y - minY) / height) * 100
           const relWidth = ((node.width || 150) / width) * 100
           const relHeight = ((node.height || 40) / height) * 100
-
           return (
             <div
               key={node.id}
@@ -1948,40 +1929,32 @@ const MiniPipelineMap = () => {
 const getSortedNodes = (nodes: Node[], edges: Edge[]): Node[] => {
   const graph: Record<string, string[]> = {}
   const inDegree: Record<string, number> = {}
-  
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     graph[node.id] = []
     inDegree[node.id] = 0
   })
-  
-  edges.forEach(edge => {
+  edges.forEach((edge) => {
     if (graph[edge.source]) {
       graph[edge.source].push(edge.target)
       inDegree[edge.target] = (inDegree[edge.target] || 0) + 1
     }
   })
-  
-  const queue = nodes.filter(node => inDegree[node.id] === 0)
+  const queue = nodes.filter((node) => inDegree[node.id] === 0)
   const sorted: Node[] = []
-  
   while (queue.length > 0) {
     const u = queue.shift()!
     sorted.push(u)
-    
-    graph[u.id].forEach(v => {
+    graph[u.id].forEach((v) => {
       inDegree[v]--
       if (inDegree[v] === 0) {
-        const nodeV = nodes.find(n => n.id === v)
+        const nodeV = nodes.find((n) => n.id === v)
         if (nodeV) queue.push(nodeV)
       }
     })
   }
-  
   if (sorted.length !== nodes.length) {
     console.warn("Topological sort failed, returning original order.")
     return nodes
   }
-  
   return sorted
 }
-
