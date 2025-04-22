@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +21,9 @@ import {
   Boxes,
   FileText,
   ArrowDownUp,
+  RefreshCw,
+  TrendingUp,
+  PlayCircle,
 } from "lucide-react"
 import type { PipelineData } from "@/components/pipeline-builder"
 
@@ -54,12 +57,44 @@ export function PipelineInfoModal({
   executionHistory = [],
 }: PipelineInfoModalProps) {
   const [activeTab, setActiveTab] = useState<string>("overview")
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false)
+  const [refreshInterval, setRefreshInterval] = useState<number>(10)
+  const [liveMetrics, setLiveMetrics] = useState(modelMetrics)
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (autoRefresh) {
+      timer = setInterval(() => {
+        setLiveMetrics({
+          accuracy: modelMetrics.accuracy || Math.random() * 0.3 + 0.7,
+          f1Score: modelMetrics.f1Score || Math.random() * 0.3 + 0.6,
+          precision: modelMetrics.precision || Math.random() * 0.3 + 0.7,
+          recall: modelMetrics.recall || Math.random() * 0.3 + 0.6,
+          auc: modelMetrics.auc || Math.random() * 0.2 + 0.75,
+          mse: modelMetrics.mse || Math.random() * 5,
+          mae: modelMetrics.mae || Math.random() * 3,
+          r2: modelMetrics.r2 || Math.random() * 0.3 + 0.6,
+        })
+      }, refreshInterval * 1000)
+    }
+    return () => clearInterval(timer)
+  }, [autoRefresh, refreshInterval, modelMetrics])
+
+  const handleRunPipeline = () => {
+    const newExecution = {
+      timestamp: new Date(),
+      status: Math.random() > 0.2 ? "success" : "warning",
+      duration: Math.floor(Math.random() * 100 + 50),
+      message: Math.random() > 0.2 ? "Pipeline executed successfully" : "Pipeline execution completed with warnings",
+    }
+    executionHistory.unshift(newExecution)
+  }
 
   // Calculate the node type distribution
   const nodeTypeCounts: Record<string, number> = {}
   pipeline.nodes.forEach((node) => {
     const type = node.type || "unknown"
-    const simplifiedType = type.split("-")[0] // Get the first part of types like "data-source"
+    const simplifiedType = type.split("-")[0]
     nodeTypeCounts[simplifiedType] = (nodeTypeCounts[simplifiedType] || 0) + 1
   })
 
@@ -127,14 +162,14 @@ export function PipelineInfoModal({
 
   // Generate default metrics if none are provided
   const metrics = {
-    accuracy: modelMetrics.accuracy || Math.random() * 0.3 + 0.7,
-    f1Score: modelMetrics.f1Score || Math.random() * 0.3 + 0.6,
-    precision: modelMetrics.precision || Math.random() * 0.3 + 0.7,
-    recall: modelMetrics.recall || Math.random() * 0.3 + 0.6,
-    auc: modelMetrics.auc || Math.random() * 0.2 + 0.75,
-    mse: modelMetrics.mse || Math.random() * 5,
-    mae: modelMetrics.mae || Math.random() * 3,
-    r2: modelMetrics.r2 || Math.random() * 0.3 + 0.6,
+    accuracy: liveMetrics.accuracy || Math.random() * 0.3 + 0.7,
+    f1Score: liveMetrics.f1Score || Math.random() * 0.3 + 0.6,
+    precision: liveMetrics.precision || Math.random() * 0.3 + 0.7,
+    recall: liveMetrics.recall || Math.random() * 0.3 + 0.6,
+    auc: liveMetrics.auc || Math.random() * 0.2 + 0.75,
+    mse: liveMetrics.mse || Math.random() * 5,
+    mae: liveMetrics.mae || Math.random() * 3,
+    r2: liveMetrics.r2 || Math.random() * 0.3 + 0.6,
   }
 
   // Default execution history if none provided
@@ -143,19 +178,19 @@ export function PipelineInfoModal({
       ? executionHistory
       : [
           {
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
             status: "success",
             duration: 120,
             message: "Initial pipeline execution completed",
           },
           {
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
             status: "warning",
             duration: 145,
             message: "Execution completed with warnings: Missing values detected",
           },
           {
-            timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
+            timestamp: new Date(Date.now() - 1000 * 60 * 60),
             status: "success",
             duration: 130,
             message: "Pipeline execution successful",
@@ -164,7 +199,6 @@ export function PipelineInfoModal({
 
   // Infer which ML task this pipeline is solving
   const inferPipelineTask = (): string => {
-    // Check for regression specific terminology
     const isRegression = pipeline.nodes.some(
       (node) =>
         node.type?.includes("regressor") ||
@@ -174,7 +208,6 @@ export function PipelineInfoModal({
 
     if (isRegression) return "Regression"
 
-    // Check for classification specific nodes
     const isClassification = pipeline.nodes.some(
       (node) =>
         node.type?.includes("classifier") ||
@@ -184,14 +217,12 @@ export function PipelineInfoModal({
 
     if (isClassification) return "Classification"
 
-    // Check for clustering
     const isClustering = pipeline.nodes.some(
       (node) => node.type?.includes("cluster") || node.data?.label?.toLowerCase().includes("clustering"),
     )
 
     if (isClustering) return "Clustering"
 
-    // Default to the most common task
     return "Classification"
   }
 
@@ -199,21 +230,22 @@ export function PipelineInfoModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center">
             <Info className="h-5 w-5 mr-2" />
             Pipeline Information
           </DialogTitle>
-          <DialogDescription>Detailed information and metrics about your ML pipeline</DialogDescription>
+          <DialogDescription>Detailed information, recommendations and metrics about your ML pipeline</DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col mt-4">
-          <TabsList className="grid grid-cols-4">
+          <TabsList className="grid grid-cols-5 gap-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="structure">Structure</TabsTrigger>
-            <TabsTrigger value="metrics">Performance Metrics</TabsTrigger>
-            <TabsTrigger value="history">Execution History</TabsTrigger>
+            <TabsTrigger value="metrics">Metrics</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="insights">Insights</TabsTrigger>
           </TabsList>
 
           <ScrollArea className="flex-1 mt-4">
@@ -494,7 +526,6 @@ ${Object.entries(connectionMap)
                       <h4 className="text-sm font-medium mb-1">Longest Path</h4>
                       <div className="text-sm">
                         {(() => {
-                          // Simplified longest path calculation
                           const entryNodes = pipeline.nodes.filter(
                             (node) => !pipeline.edges.some((edge) => edge.target === node.id),
                           )
@@ -878,6 +909,131 @@ ${Object.entries(connectionMap)
                   </div>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center">
+                    <RefreshCw className="h-4 w-4 mr-2 text-primary" />
+                    Manual Pipeline Run
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center">
+                    <button
+                      className="px-4 py-2 border rounded-md flex items-center gap-2 hover:bg-muted"
+                      onClick={handleRunPipeline}
+                    >
+                      <PlayCircle className="h-4 w-4" />
+                      Run Pipeline
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="insights" className="space-y-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center">
+                    <TrendingUp className="h-4 w-4 mr-2 text-primary" />
+                    Real-Time Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium">Live Accuracy:</span>
+                      <span className="text-sm font-mono">{metrics.accuracy.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium">Live Loss:</span>
+                      <span className="text-sm font-mono">{metrics.mse.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium">Live F1 Score:</span>
+                      <span className="text-sm font-mono">{metrics.f1Score.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium">Live Throughput:</span>
+                      <span className="text-sm font-mono">{Math.floor(Math.random() * 100 + 20)} samples/sec</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center">
+                    <Info className="h-4 w-4 mr-2 text-primary" />
+                    Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm">Based on the execution history and node connectivity, consider:</p>
+                    <ul className="list-disc ml-5 space-y-1 text-sm">
+                      <li>Add more robust error handling in data preprocessing.</li>
+                      <li>Integrate advanced evaluation metrics for deeper insights.</li>
+                      <li>Optimize the pipeline execution flow with caching mechanisms.</li>
+                      <li>Employ automated model tuning for improved performance.</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center">
+                    <GitBranch className="h-4 w-4 mr-2 text-primary" />
+                    Graph Visualization Data
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border p-4">
+                    <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                      {`Graph Data:
+Nodes Count: ${pipeline.nodes.length}
+Edges Count: ${pipeline.edges.length}
+Connections: ${Object.entries(connectionMap)
+  .map(([src, targets]) => `${src}: [${targets.join(", ")}]`)
+  .join("; ")}`}
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center">
+                    <RefreshCw className="h-4 w-4 mr-2 text-primary" />
+                    Auto Refresh Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={autoRefresh}
+                        onChange={() => setAutoRefresh(!autoRefresh)}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm">Enable Auto Refresh</span>
+                    </label>
+                    {autoRefresh && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">Interval (sec):</span>
+                        <input
+                          type="number"
+                          value={refreshInterval}
+                          onChange={(e) => setRefreshInterval(parseInt(e.target.value))}
+                          className="border rounded-md px-1 text-sm w-16"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </ScrollArea>
         </Tabs>
@@ -885,4 +1041,3 @@ ${Object.entries(connectionMap)
     </Dialog>
   )
 }
-
