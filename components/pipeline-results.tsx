@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { X, ArrowDown, ArrowUp, Check, AlertTriangle, AlertCircle, BarChart, Loader2 } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { X, ArrowDown, ArrowUp, Check, AlertTriangle, AlertCircle, BarChart, Loader2, Copy } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -20,6 +20,10 @@ export const PipelineResults = ({ results, onClose, isRunning }: PipelineResults
   const [activeTab, setActiveTab] = useState<string>("summary")
   const [sortBy, setSortBy] = useState<"time" | "name">("time")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [filterText, setFilterText] = useState<string>("")
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false)
+  const [refreshIndicator, setRefreshIndicator] = useState<boolean>(false)
+  const copyRef = useRef<HTMLButtonElement>(null)
 
   const toggleSortDirection = () => {
     setSortDirection(sortDirection === "asc" ? "desc" : "asc")
@@ -34,6 +38,11 @@ export const PipelineResults = ({ results, onClose, isRunning }: PipelineResults
       return sortDirection === "asc" ? comparison : -comparison
     }
   })
+
+  // Filter results based on filterText in details tab
+  const filteredResults = sortedResults.filter(result =>
+    result.nodeName.toLowerCase().includes(filterText.toLowerCase())
+  )
 
   // Count results by status
   const statusCounts = {
@@ -66,6 +75,53 @@ export const PipelineResults = ({ results, onClose, isRunning }: PipelineResults
     }
   })
 
+  // Auto refresh simulation when autoRefresh is enabled and pipeline is running
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (autoRefresh && isRunning) {
+      timer = setInterval(() => {
+        setRefreshIndicator(true)
+        setTimeout(() => {
+          setRefreshIndicator(false)
+        }, 300)
+      }, 5000)
+    }
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [autoRefresh, isRunning])
+
+  // Export pipeline results functionality
+  const handleExport = () => {
+    const dataStr = JSON.stringify(results, null, 2)
+    const blob = new Blob([dataStr], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = "pipeline_results_export.json"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  // Copy pipeline results JSON to clipboard
+  const handleCopy = async () => {
+    const dataStr = JSON.stringify(results, null, 2)
+    try {
+      await navigator.clipboard.writeText(dataStr)
+      if (copyRef.current) {
+        copyRef.current.innerText = "Copied!"
+        setTimeout(() => {
+          if (copyRef.current) {
+            copyRef.current.innerText = "Copy to Clipboard"
+          }
+        }, 2000)
+      }
+    } catch (error) {
+      console.error("Failed to copy results", error)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl max-h-[80vh] flex flex-col">
@@ -74,28 +130,40 @@ export const PipelineResults = ({ results, onClose, isRunning }: PipelineResults
             <CardTitle className="text-xl">Pipeline Results</CardTitle>
             <CardDescription>Execution results for all pipeline nodes</CardDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setAutoRefresh(!autoRefresh)}>
+              {autoRefresh ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowDown className="h-4 w-4" />
+              )}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
 
         {isRunning && (
           <div className="mx-6 mb-4 flex items-center gap-2 bg-primary/10 p-2 rounded-md">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
             <span className="text-sm">Pipeline execution in progress...</span>
+            {refreshIndicator && <span className="text-xs text-primary animate-pulse">Auto-refresh triggered</span>}
           </div>
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <div className="px-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4 gap-2">
               <TabsTrigger value="summary">Summary</TabsTrigger>
               <TabsTrigger value="details">Node Details</TabsTrigger>
               <TabsTrigger value="metrics">Metrics</TabsTrigger>
+              <TabsTrigger value="export">Export</TabsTrigger>
             </TabsList>
           </div>
 
           <ScrollArea className="flex-1 px-6 py-4">
+            {/* Summary Tab */}
             <TabsContent value="summary" className="mt-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card>
@@ -192,49 +260,68 @@ export const PipelineResults = ({ results, onClose, isRunning }: PipelineResults
               </div>
             </TabsContent>
 
+            {/* Details Tab */}
             <TabsContent value="details" className="mt-0">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Execution Details</h3>
-                <div className="flex gap-2">
+              <div className="flex flex-col gap-4 mb-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Execution Details</h3>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSortBy("name")
+                        toggleSortDirection()
+                      }}
+                      className={cn(sortBy === "name" && "bg-primary/10")}
+                    >
+                      Name{" "}
+                      {sortBy === "name" &&
+                        (sortDirection === "asc" ? (
+                          <ArrowUp className="ml-1 h-3 w-3" />
+                        ) : (
+                          <ArrowDown className="ml-1 h-3 w-3" />
+                        ))}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSortBy("time")
+                        toggleSortDirection()
+                      }}
+                      className={cn(sortBy === "time" && "bg-primary/10")}
+                    >
+                      Time{" "}
+                      {sortBy === "time" &&
+                        (sortDirection === "asc" ? (
+                          <ArrowUp className="ml-1 h-3 w-3" />
+                        ) : (
+                          <ArrowDown className="ml-1 h-3 w-3" />
+                        ))}
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Search by node name..."
+                    value={filterText}
+                    onChange={(e) => setFilterText(e.target.value)}
+                    className="border rounded-md p-2 flex-1"
+                  />
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setSortBy("name")
-                      toggleSortDirection()
-                    }}
-                    className={cn(sortBy === "name" && "bg-primary/10")}
+                    onClick={() => setFilterText("")}
                   >
-                    Name{" "}
-                    {sortBy === "name" &&
-                      (sortDirection === "asc" ? (
-                        <ArrowUp className="ml-1 h-3 w-3" />
-                      ) : (
-                        <ArrowDown className="ml-1 h-3 w-3" />
-                      ))}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSortBy("time")
-                      toggleSortDirection()
-                    }}
-                    className={cn(sortBy === "time" && "bg-primary/10")}
-                  >
-                    Time{" "}
-                    {sortBy === "time" &&
-                      (sortDirection === "asc" ? (
-                        <ArrowUp className="ml-1 h-3 w-3" />
-                      ) : (
-                        <ArrowDown className="ml-1 h-3 w-3" />
-                      ))}
+                    Clear Filter
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-4">
-                {sortedResults.map((result) => (
+                {filteredResults.map((result) => (
                   <Card
                     key={result.nodeId}
                     className={cn(
@@ -319,6 +406,7 @@ export const PipelineResults = ({ results, onClose, isRunning }: PipelineResults
               </div>
             </TabsContent>
 
+            {/* Metrics Tab */}
             <TabsContent value="metrics" className="mt-0">
               <div className="space-y-6">
                 <div>
@@ -388,10 +476,29 @@ export const PipelineResults = ({ results, onClose, isRunning }: PipelineResults
                 </div>
               </div>
             </TabsContent>
+
+            {/* Export Tab */}
+            <TabsContent value="export" className="mt-0">
+              <div className="flex flex-col gap-4">
+                <h3 className="text-lg font-medium">Export Pipeline Results</h3>
+                <div className="flex flex-col md:flex-row gap-4 items-start">
+                  <Button onClick={handleExport} className="flex items-center gap-2">
+                    Export JSON
+                  </Button>
+                  <Button ref={copyRef} onClick={handleCopy} variant="outline" className="flex items-center gap-2">
+                    <Copy className="h-4 w-4" /> Copy to Clipboard
+                  </Button>
+                </div>
+                <div className="bg-muted p-3 rounded-md max-h-60 overflow-y-auto">
+                  <pre className="text-xs whitespace-pre-wrap">
+                    {JSON.stringify(results, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            </TabsContent>
           </ScrollArea>
         </Tabs>
       </Card>
     </div>
   )
 }
-
