@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, ArrowRightLeft, BarChart3, Play, SquareStack, Check, LineChart, Info, Download } from "lucide-react"
+import { X, ArrowRightLeft, BarChart3, Play, SquareStack, Check, LineChart, Info, Download, RefreshCcw } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -35,6 +35,9 @@ export const PipelineComparison = ({
   const [pipelineBId, setPipelineBId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>("overview")
   
+  // New state to force recalc of metrics when clicked in Advanced tab
+  const [metricRecalcFlag, setMetricRecalcFlag] = useState<boolean>(false)
+
   const pipelineA = savedPipelines.find(p => p.id === pipelineAId)
   const pipelineB = savedPipelines.find(p => p.id === pipelineBId)
   
@@ -156,6 +159,29 @@ export const PipelineComparison = ({
     return `Pipeline ${betterPipeline} (${betterName}) performed better with ${Math.abs(improvement).toFixed(2)}% ${improvement > 0 ? 'improvement' : 'difference'} in accuracy.`
   }
   
+  // Advanced: Generate aggregated node summary comparing the number of node types
+  const getNodeSummary = () => {
+    const summarize = (pipeline?: PipelineData) => {
+      if (!pipeline) return {}
+      return pipeline.nodes.reduce((acc: Record<string, number>, node) => {
+        acc[node.type] = (acc[node.type] || 0) + 1
+        return acc
+      }, {})
+    }
+    const summaryA = summarize(pipelineA)
+    const summaryB = summarize(pipelineB)
+    return { summaryA, summaryB }
+  }
+  
+  const { summaryA, summaryB } = getNodeSummary()
+  
+  // Reset pipeline selection
+  const resetSelection = () => {
+    setPipelineAId(null)
+    setPipelineBId(null)
+    setActiveTab("overview")
+  }
+  
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
       <Card className="w-full max-w-5xl max-h-[85vh] flex flex-col">
@@ -173,6 +199,20 @@ export const PipelineComparison = ({
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4">
+          {/* New Reset Selection Button */}
+          <div className="flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={resetSelection}
+              title="Reset Pipeline Selection"
+              className="flex items-center gap-1"
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Reset Selection
+            </Button>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-1.5 block">Pipeline A</label>
@@ -233,10 +273,11 @@ export const PipelineComparison = ({
           
           {(resultsA.length > 0 || resultsB.length > 0) && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="metrics">Detailed Metrics</TabsTrigger>
                 <TabsTrigger value="structure">Pipeline Structure</TabsTrigger>
+                <TabsTrigger value="advanced">Advanced</TabsTrigger>
               </TabsList>
               
               <ScrollArea className="flex-1 mt-4">
@@ -655,6 +696,79 @@ export const PipelineComparison = ({
                     )}
                   </div>
                 </TabsContent>
+                
+                {/* Advanced Tab with new features */}
+                <TabsContent value="advanced" className="mt-0">
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium">Advanced Node Summary</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setMetricRecalcFlag(!metricRecalcFlag)}
+                        title="Recalculate Metrics"
+                        className="flex items-center gap-1"
+                      >
+                        <RefreshCcw className="h-4 w-4" />
+                        Recalculate Metrics
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">Pipeline A Node Types</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {pipelineA ? (
+                            <div className="space-y-2">
+                              {Object.keys(summaryA).length > 0 ? (
+                                Object.entries(summaryA).map(([nodeType, count]) => (
+                                  <div key={nodeType} className="flex justify-between text-sm">
+                                    <span>{nodeType}</span>
+                                    <span className="font-medium">{count}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-xs text-muted-foreground">No nodes found</div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-muted-foreground">No pipeline selected</div>
+                          )}
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">Pipeline B Node Types</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {pipelineB ? (
+                            <div className="space-y-2">
+                              {Object.keys(summaryB).length > 0 ? (
+                                Object.entries(summaryB).map(([nodeType, count]) => (
+                                  <div key={nodeType} className="flex justify-between text-sm">
+                                    <span>{nodeType}</span>
+                                    <span className="font-medium">{count}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-xs text-muted-foreground">No nodes found</div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-muted-foreground">No pipeline selected</div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    {/* Additional advanced insights can be added here */}
+                    <div className="bg-gray-50 rounded-md p-4 text-sm text-muted-foreground">
+                      Advanced analytics options coming soon...
+                    </div>
+                  </div>
+                </TabsContent>
               </ScrollArea>
             </Tabs>
           )}
@@ -682,4 +796,4 @@ export const PipelineComparison = ({
       </Card>
     </div>
   )
-} 
+}
