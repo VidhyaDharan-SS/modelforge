@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,14 +19,11 @@ import {
   Folder,
   FilePlus,
   ChevronDown,
-  BarChart,
   BarChart3,
   ArrowRightLeft,
   History,
   Search,
   Star,
-  CircleCheck,
-  Plus,
   Database,
   FileSpreadsheet,
   Boxes,
@@ -60,7 +56,6 @@ import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-// Node type definitions for search functionality
 type NodeType = {
   type: string;
   label: string;
@@ -127,6 +122,7 @@ export const Navbar = ({
 }: NavbarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+  const [showDocsDialog, setShowDocsDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [favoriteNodes, setFavoriteNodes] = useState<string[]>([])
   
@@ -205,188 +201,162 @@ export const Navbar = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleLeftSidebar}
-          className={cn(
-            "text-muted-foreground hover:text-foreground transition-colors",
-            !leftSidebarOpen && "bg-muted/50",
-          )}
-        >
-          <PanelLeft className="h-4 w-4" />
-        </Button>
+    <>
+      {/* Documentation Modal */}
+      <Dialog open={showDocsDialog} onOpenChange={setShowDocsDialog}>
+        <DialogTrigger asChild>
+          <span />
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>About Modelforge ML</DialogTitle>
+            <DialogDescription>
+              Modelforge ML is a powerful machine learning pipeline builder that allows you to design, run, and deploy comprehensive ML workflows with ease.
+              Enhance your productivity with intuitive drag-and-drop nodes, real-time results, and comparison tools for model tuning.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowDocsDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-          <DialogTrigger asChild>
-            <div className="flex flex-col cursor-pointer">
-              <Input
-                value={pipelineName}
-                onChange={(e) => setPipelineName(e.target.value)}
-                className="h-9 w-64 font-medium transition-all focus-visible:ring-primary"
-                onClick={(e) => e.stopPropagation()}
-              />
-              {pipelineDescription && (
-                <div className="text-xs text-muted-foreground line-clamp-1 max-w-64">{pipelineDescription}</div>
-              )}
-            </div>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Pipeline Details</DialogTitle>
-              <DialogDescription>Edit your pipeline name and description</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="name" className="text-sm font-medium">
-                  Name
-                </label>
+      <div className="flex items-center justify-between p-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleLeftSidebar}
+            className={cn(
+              "text-muted-foreground hover:text-foreground transition-colors",
+              !leftSidebarOpen && "bg-muted/50"
+            )}
+          >
+            <PanelLeft className="h-4 w-4" />
+          </Button>
+
+          {/* Product Branding */}
+          <div className="flex items-center gap-2">
+            <Rocket className="h-6 w-6 text-amber-500" />
+            <span className="font-bold text-xl bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">
+              Modelforge ML
+            </span>
+          </div>
+
+          <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+            <DialogTrigger asChild>
+              <div className="flex flex-col cursor-pointer">
                 <Input
-                  id="name"
                   value={pipelineName}
                   onChange={(e) => setPipelineName(e.target.value)}
-                  className="w-full"
+                  className="h-9 w-64 font-medium transition-all focus-visible:ring-primary"
+                  onClick={(e) => e.stopPropagation()}
                 />
+                {pipelineDescription && (
+                  <div className="text-xs text-muted-foreground line-clamp-1 max-w-64">{pipelineDescription}</div>
+                )}
               </div>
-              <div className="grid gap-2">
-                <label htmlFor="description" className="text-sm font-medium">
-                  Description
-                </label>
-                <Textarea
-                  id="description"
-                  value={pipelineDescription}
-                  onChange={(e) => setPipelineDescription(e.target.value)}
-                  className="w-full resize-none"
-                  rows={4}
-                  placeholder="Describe what this pipeline does..."
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => setShowDetailsDialog(false)}>Save changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {lastSaved && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center text-xs text-muted-foreground ml-2">
-                  <Clock className="h-3 w-3 mr-1" />
-                  <span>{formatLastSaved()}</span>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Pipeline Details</DialogTitle>
+                <DialogDescription>Edit your pipeline name and description</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <label htmlFor="name" className="text-sm font-medium">
+                    Name
+                  </label>
+                  <Input
+                    id="name"
+                    value={pipelineName}
+                    onChange={(e) => setPipelineName(e.target.value)}
+                    className="w-full"
+                  />
                 </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Last saved: {lastSaved.toLocaleString()}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
+                <div className="grid gap-2">
+                  <label htmlFor="description" className="text-sm font-medium">
+                    Description
+                  </label>
+                  <Textarea
+                    id="description"
+                    value={pipelineDescription}
+                    onChange={(e) => setPipelineDescription(e.target.value)}
+                    className="w-full resize-none"
+                    rows={4}
+                    placeholder="Describe what this pipeline does..."
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setShowDetailsDialog(false)}>Save changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-      <div className="flex items-center gap-2">
-        <input type="file" ref={fileInputRef} onChange={onImport} accept=".json,.py,.ipynb" className="hidden" />
-
-        <Button variant="outline" size="sm" onClick={onNew} className="transition-all hover:border-primary">
-          <FilePlus className="h-4 w-4 mr-2" />
-          New
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onShowTemplates}
-          className="transition-all hover:border-primary"
-        >
-          <FileJson className="h-4 w-4 mr-2" />
-          Templates
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onShowSavedPipelines}
-          className="transition-all hover:border-primary"
-        >
-          <Folder className="h-4 w-4 mr-2" />
-          Saved
-        </Button>
-        
-        {/* Favorites dropdown */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="transition-all hover:border-primary">
-              <Star className="h-4 w-4 mr-2" />
-              Favorites
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-60 p-0">
-            <div className="p-2 border-b">
-              <h3 className="text-sm font-medium">Favorite Components</h3>
-              <p className="text-xs text-muted-foreground">Most used nodes for quick access</p>
-            </div>
-            <ScrollArea className="h-52">
-              <div className="p-2">
-                {getMostUsedNodes().map(node => (
-                  <div 
-                    key={node.type}
-                    className="flex items-center justify-between px-2 py-1.5 hover:bg-muted rounded-md cursor-pointer group"
-                    onClick={() => handleAddNode(node.type)}
-                  >
-                    <div className="flex items-center gap-2">
-                      {node.icon}
-                      <div>
-                        <p className="text-xs font-medium">{node.label}</p>
-                        <p className="text-xs text-muted-foreground">{node.usageCount} uses</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(node.type);
-                      }}
-                    >
-                      <Star className={`h-3.5 w-3.5 ${favoriteNodes.includes(node.type) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
-                    </Button>
+          {lastSaved && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center text-xs text-muted-foreground ml-2">
+                    <Clock className="h-3 w-3 mr-1" />
+                    <span>{formatLastSaved()}</span>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Last saved: {lastSaved.toLocaleString()}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
 
-        {/* Node search dropdown */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="transition-all hover:border-primary">
-              <Search className="h-4 w-4 mr-2" />
-              Search Nodes
+        <div className="flex items-center gap-2">
+          <input type="file" ref={fileInputRef} onChange={onImport} accept=".json,.py,.ipynb" className="hidden" />
+
+          <Button variant="outline" size="sm" onClick={onNew} className="transition-all hover:border-primary">
+            <FilePlus className="h-4 w-4 mr-2" />
+            New
+          </Button>
+
+          {onShowTemplates && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onShowTemplates}
+              className="transition-all hover:border-primary"
+            >
+              <FileJson className="h-4 w-4 mr-2" />
+              Templates
             </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-80 p-0">
-            <div className="p-2 border-b">
-              <Input
-                placeholder="Search components..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 text-sm"
-                autoFocus
-              />
-            </div>
-            <ScrollArea className="h-60">
-              {filteredNodes.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No components matching "{searchQuery}"
-                </div>
-              ) : (
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onShowSavedPipelines}
+            className="transition-all hover:border-primary"
+          >
+            <Folder className="h-4 w-4 mr-2" />
+            Saved
+          </Button>
+          
+          {/* Favorites dropdown */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="transition-all hover:border-primary">
+                <Star className="h-4 w-4 mr-2" />
+                Favorites
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-60 p-0">
+              <div className="p-2 border-b">
+                <h3 className="text-sm font-medium">Favorite Components</h3>
+                <p className="text-xs text-muted-foreground">Most used nodes for quick access</p>
+              </div>
+              <ScrollArea className="h-52">
                 <div className="p-2">
-                  {filteredNodes.map(node => (
+                  {getMostUsedNodes().map(node => (
                     <div 
                       key={node.type}
                       className="flex items-center justify-between px-2 py-1.5 hover:bg-muted rounded-md cursor-pointer group"
@@ -396,7 +366,7 @@ export const Navbar = ({
                         {node.icon}
                         <div>
                           <p className="text-xs font-medium">{node.label}</p>
-                          <p className="text-xs text-muted-foreground">{node.description}</p>
+                          <p className="text-xs text-muted-foreground">{node.usageCount} uses</p>
                         </div>
                       </div>
                       <Button
@@ -413,144 +383,215 @@ export const Navbar = ({
                     </div>
                   ))}
                 </div>
-              )}
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onSave}
-          disabled={isSaving}
-          className="transition-all hover:border-primary"
-        >
-          <Save className={`h-4 w-4 mr-2 ${isSaving ? "animate-pulse" : ""}`} />
-          {isSaving ? "Saving..." : "Save"}
-        </Button>
+          {/* Node search dropdown */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="transition-all hover:border-primary">
+                <Search className="h-4 w-4 mr-2" />
+                Search Nodes
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-0">
+              <div className="p-2 border-b">
+                <Input
+                  placeholder="Search components..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-8 text-sm"
+                  autoFocus
+                />
+              </div>
+              <ScrollArea className="h-60">
+                {filteredNodes.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    No components matching "{searchQuery}"
+                  </div>
+                ) : (
+                  <div className="p-2">
+                    {filteredNodes.map(node => (
+                      <div 
+                        key={node.type}
+                        className="flex items-center justify-between px-2 py-1.5 hover:bg-muted rounded-md cursor-pointer group"
+                        onClick={() => handleAddNode(node.type)}
+                      >
+                        <div className="flex items-center gap-2">
+                          {node.icon}
+                          <div>
+                            <p className="text-xs font-medium">{node.label}</p>
+                            <p className="text-xs text-muted-foreground">{node.description}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(node.type);
+                          }}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${favoriteNodes.includes(node.type) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          className="transition-all hover:border-primary"
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Import
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" disabled={isExporting} className="transition-all hover:border-primary">
-              <Download className={`h-4 w-4 mr-2 ${isExporting ? "animate-pulse" : ""}`} />
-              {isExporting ? "Exporting..." : "Export"}
-              <ChevronDown className="h-3 w-3 ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onExport("json")}>
-              <FileJson className="h-4 w-4 mr-2" />
-              Pipeline JSON
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onExport("python")}>
-              <FileJson className="h-4 w-4 mr-2" />
-              Python Script
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onExport("jupyter")}>
-              <FileJson className="h-4 w-4 mr-2" />
-              Jupyter Notebook
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onExport("sklearn")}>
-              <FileJson className="h-4 w-4 mr-2" />
-              scikit-learn Pipeline
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {hasResults && (
           <Button
             variant="outline"
             size="sm"
-            onClick={onToggleResults}
-            className="transition-all hover:border-primary text-primary"
+            onClick={onSave}
+            disabled={isSaving}
+            className="transition-all hover:border-primary"
           >
-            <BarChart className="h-4 w-4 mr-2" />
-            View Results
+            <Save className={`h-4 w-4 mr-2 ${isSaving ? "animate-pulse" : ""}`} />
+            {isSaving ? "Saving..." : "Save"}
           </Button>
-        )}
 
-        <Separator orientation="vertical" className="h-6" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="transition-all hover:border-primary"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Import
+          </Button>
 
-        <ThemeToggle />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isExporting} className="transition-all hover:border-primary">
+                <Download className={`h-4 w-4 mr-2 ${isExporting ? "animate-pulse" : ""}`} />
+                {isExporting ? "Exporting..." : "Export"}
+                <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onExport("json")}>
+                <FileJson className="h-4 w-4 mr-2" />
+                Pipeline JSON
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onExport("python")}>
+                <FileJson className="h-4 w-4 mr-2" />
+                Python Script
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExport("jupyter")}>
+                <FileJson className="h-4 w-4 mr-2" />
+                Jupyter Notebook
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExport("sklearn")}>
+                <FileJson className="h-4 w-4 mr-2" />
+                scikit-learn Pipeline
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-8 w-8">
-              <Settings className="h-4 w-4" />
+          {hasResults && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onToggleResults}
+              className="transition-all hover:border-primary text-primary"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              View Results
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Pipeline Settings</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onShowPipelineInfo}>
-              <Info className="h-4 w-4 mr-2" />
-              Pipeline Information
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleRightSidebar}
-          className={cn(
-            "text-muted-foreground hover:text-foreground transition-colors",
-            !rightSidebarOpen && "bg-muted/50",
           )}
-        >
-          <PanelRight className="h-4 w-4" />
-        </Button>
 
-        <Button size="sm" onClick={onRun} disabled={isRunning} className="relative group">
-          <Play className={`h-4 w-4 mr-2 ${isRunning ? "animate-pulse" : ""}`} />
-          {isRunning ? "Running..." : "Run Pipeline"}
-          <span className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Badge variant="secondary" className="text-[10px] px-1 py-0">
-              Ctrl+R
-            </Badge>
-          </span>
-        </Button>
+          <Separator orientation="vertical" className="h-6" />
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={onShowComparison}>
-                <ArrowRightLeft className="h-4 w-4 mr-1.5" />
-                <span className="hidden sm:inline">Compare</span>
+          {/* Product Documentation / Help button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={() => setShowDocsDialog(true)}>
+                  <Info className="h-4 w-4 mr-2" />
+                  Docs
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Learn more about Modelforge ML</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <ThemeToggle />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8">
+                <Settings className="h-4 w-4" />
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Compare pipelines with A/B testing</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Pipeline Settings</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onShowPipelineInfo}>
+                <Info className="h-4 w-4 mr-2" />
+                Pipeline Information
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={onShowSnapshots}>
-                <History className="h-4 w-4 mr-1.5" />
-                <span className="hidden md:inline">History</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>View pipeline snapshots</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleRightSidebar}
+            className={cn(
+              "text-muted-foreground hover:text-foreground transition-colors",
+              !rightSidebarOpen && "bg-muted/50"
+            )}
+          >
+            <PanelRight className="h-4 w-4" />
+          </Button>
+
+          <Button size="sm" onClick={onRun} disabled={isRunning} className="relative group">
+            <Play className={`h-4 w-4 mr-2 ${isRunning ? "animate-pulse" : ""}`} />
+            {isRunning ? "Running..." : "Run Pipeline"}
+            <span className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                Ctrl+R
+              </Badge>
+            </span>
+          </Button>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={onShowComparison}>
+                  <ArrowRightLeft className="h-4 w-4 mr-1.5" />
+                  <span className="hidden sm:inline">Compare</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Compare pipelines with A/B testing</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={onShowSnapshots}>
+                  <History className="h-4 w-4 mr-1.5" />
+                  <span className="hidden md:inline">History</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View pipeline snapshots</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
-
