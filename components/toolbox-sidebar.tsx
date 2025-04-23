@@ -539,7 +539,7 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
               </div>
             </div>
 
-            <ScrollArea className="flex-1 overflow-y-auto">
+            <ScrollArea className="flex-1 overflow-y-auto h-full">
               <TabsContent value="all" className="m-0">
                 {Object.entries(groupedComponents).length === 0 ? (
                   <div className="p-4 text-center text-muted-foreground">No components match your search</div>
@@ -548,7 +548,7 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
                     <Collapsible key={category} defaultOpen={true}>
                       <div className="relative flex w-full min-w-0 flex-col p-2">
                         <CollapsibleTrigger className="w-full">
-                          <div className="duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-foreground/70 outline-none ring-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 justify-between">
+                          <div className="duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-foreground/70 outline-none ring-ring transition-[margin,opa] ease-linear focus-visible:ring-2 justify-between">
                             <span className="capitalize">{getCategoryName(category)}</span>
                             <Filter className="h-3 w-3" />
                           </div>
@@ -562,8 +562,7 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
                                     draggable
                                     onDragStart={(e) => onDragStart(e, component.id)}
                                     className={cn(
-                                      "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 h-8 cursor-grab group relative",
-                                      component.isPremium && "border-l-2 border-amber-500",
+                                      "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 h-8 cursor-grab"
                                     )}
                                   >
                                     <component.icon
@@ -574,25 +573,6 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
                                       )}
                                     />
                                     <span className="truncate">{component.name}</span>
-
-                                    {component.isNew && (
-                                      <Badge
-                                        variant="outline"
-                                        className="ml-auto text-[10px] py-0 px-1 bg-green-500/10 text-green-500 border-green-500/20"
-                                      >
-                                        NEW
-                                      </Badge>
-                                    )}
-
-                                    {component.isPremium && (
-                                      <Badge
-                                        variant="outline"
-                                        className="ml-auto text-[10px] py-0 px-1 bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                      >
-                                        PRO
-                                      </Badge>
-                                    )}
-
                                     {!component.isNew && !component.isPremium && component.library && (
                                       <div className="ml-auto opacity-0 group-hover:opacity-100 text-[10px] text-muted-foreground">
                                         {component.library}
@@ -626,8 +606,7 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
                               draggable
                               onDragStart={(e) => onDragStart(e, component.id)}
                               className={cn(
-                                "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 h-8 cursor-grab group relative",
-                                component.isPremium && "border-l-2 border-amber-500",
+                                "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 h-8 cursor-grab"
                               )}
                             >
                               <component.icon
@@ -638,24 +617,6 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
                                 )}
                               />
                               <span className="truncate">{component.name}</span>
-
-                              {component.isNew && (
-                                <Badge
-                                  variant="outline"
-                                  className="ml-auto text-[10px] py-0 px-1 bg-green-500/10 text-green-500 border-green-500/20"
-                                >
-                                  NEW
-                                </Badge>
-                              )}
-
-                              {component.isPremium && (
-                                <Badge
-                                  variant="outline"
-                                  className="ml-auto text-[10px] py-0 px-1 bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                >
-                                  PRO
-                                </Badge>
-                              )}
                             </div>
                           </li>
                         ))}
@@ -681,8 +642,7 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
                               draggable
                               onDragStart={(e) => onDragStart(e, component.id)}
                               className={cn(
-                                "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 h-8 cursor-grab group relative",
-                                component.isPremium && "border-l-2 border-amber-500",
+                                "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 h-8 cursor-grab"
                               )}
                             >
                               <component.icon
@@ -693,24 +653,6 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
                                 )}
                               />
                               <span className="truncate">{component.name}</span>
-
-                              {component.isNew && (
-                                <Badge
-                                  variant="outline"
-                                  className="ml-auto text-[10px] py-0 px-1 bg-green-500/10 text-green-500 border-green-500/20"
-                                >
-                                  NEW
-                                </Badge>
-                              )}
-
-                              {component.isPremium && (
-                                <Badge
-                                  variant="outline"
-                                  className="ml-auto text-[10px] py-0 px-1 bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                >
-                                  PRO
-                                </Badge>
-                              )}
                             </div>
                           </li>
                         ))}
@@ -735,7 +677,7 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 overflow-y-auto">
+          <ScrollArea className="flex-1 overflow-y-auto h-full">
             <div className="flex flex-col gap-1 p-2">
               {Object.entries(groupedComponents).map(([category, items]) => (
                 <div key={category} className="mb-4">
@@ -751,9 +693,6 @@ export const ToolboxSidebar = ({ onClose }: ToolboxSidebarProps) => {
                       title={component.name}
                     >
                       <component.icon className="h-5 w-5" />
-                      {component.isNew && (
-                        <div className="absolute -top-1 -right-1 h-2 w-2 bg-green-500 rounded-full" />
-                      )}
                     </div>
                   ))}
                 </div>
