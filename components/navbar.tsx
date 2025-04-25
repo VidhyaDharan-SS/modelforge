@@ -237,7 +237,6 @@ export const Navbar = ({
 
           {/* Product Branding */}
           <div className="flex items-center gap-2">
-            <Rocket className="h-6 w-6 text-amber-500" />
             <span className="font-bold text-xl bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">
               Modelforge ML
             </span>
