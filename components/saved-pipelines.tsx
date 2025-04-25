@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, Trash2, FileBox, Clock, Search, Calendar, ArrowUpDown } from "lucide-react"
+import { X, Trash2, FileBox, Clock, Search, Calendar, ArrowUpDown, Edit2, Download, Check } from "lucide-react"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,18 +27,31 @@ interface SavedPipelinesProps {
   onLoad: (pipeline: PipelineData) => void
   onDelete: (id: string) => void
   onClose: () => void
+  onEdit?: (pipeline: PipelineData) => void
+  onExport?: (pipeline: PipelineData) => void
 }
 
-export const SavedPipelines = ({ pipelines, onLoad, onDelete, onClose }: SavedPipelinesProps) => {
+type SortBy = "name" | "date" | "nodes"
+
+export const SavedPipelines = ({
+  pipelines,
+  onLoad,
+  onDelete,
+  onClose,
+  onEdit,
+  onExport,
+}: SavedPipelinesProps) => {
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState<"name" | "date">("date")
+  const [sortBy, setSortBy] = useState<SortBy>("date")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+  const [isMultiSelect, setIsMultiSelect] = useState(false)
+  const [selectedPipelines, setSelectedPipelines] = useState<string[]>([])
 
   const toggleSortDirection = () => {
     setSortDirection(sortDirection === "asc" ? "desc" : "asc")
   }
 
-  const changeSortBy = (newSortBy: "name" | "date") => {
+  const changeSortBy = (newSortBy: SortBy) => {
     if (sortBy === newSortBy) {
       toggleSortDirection()
     } else {
@@ -56,6 +69,8 @@ export const SavedPipelines = ({ pipelines, onLoad, onDelete, onClose }: SavedPi
     .sort((a, b) => {
       if (sortBy === "name") {
         return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+      } else if (sortBy === "nodes") {
+        return sortDirection === "asc" ? a.nodes.length - b.nodes.length : b.nodes.length - a.nodes.length
       } else {
         const dateA = a.lastSaved ? new Date(a.lastSaved).getTime() : 0
         const dateB = b.lastSaved ? new Date(b.lastSaved).getTime() : 0
@@ -67,6 +82,30 @@ export const SavedPipelines = ({ pipelines, onLoad, onDelete, onClose }: SavedPi
     return new Date(date).toLocaleString()
   }
 
+  const handlePipelineClick = (pipeline: PipelineData) => {
+    if (isMultiSelect) {
+      if (selectedPipelines.includes(pipeline.id)) {
+        setSelectedPipelines(selectedPipelines.filter((id) => id !== pipeline.id))
+      } else {
+        setSelectedPipelines([...selectedPipelines, pipeline.id])
+      }
+    } else {
+      onLoad(pipeline)
+    }
+  }
+
+  const handleBulkDelete = () => {
+    selectedPipelines.forEach((id) => onDelete(id))
+    setSelectedPipelines([])
+  }
+
+  const toggleMultiSelectMode = () => {
+    if (isMultiSelect) {
+      setSelectedPipelines([])
+    }
+    setIsMultiSelect(!isMultiSelect)
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl max-h-[80vh] flex flex-col">
@@ -75,9 +114,14 @@ export const SavedPipelines = ({ pipelines, onLoad, onDelete, onClose }: SavedPi
             <CardTitle className="text-xl">Saved Pipelines</CardTitle>
             <CardDescription>Your collection of ML pipelines</CardDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={toggleMultiSelectMode}>
+              {isMultiSelect ? "Multi-Select On" : "Multi-Select Off"}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
 
         <div className="px-6 pb-3 flex items-center gap-2">
@@ -129,7 +173,38 @@ export const SavedPipelines = ({ pipelines, onLoad, onDelete, onClose }: SavedPi
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => changeSortBy("nodes")}
+                  className={cn(sortBy === "nodes" && "bg-muted")}
+                >
+                  <FileBox className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Sort by node count {sortBy === "nodes" ? (sortDirection === "asc" ? "(fewest to most)" : "(most to fewest)") : ""}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
+
+        {isMultiSelect && selectedPipelines.length > 0 && (
+          <div className="px-6 pb-3 flex items-center gap-2">
+            <Button variant="destructive" onClick={handleBulkDelete}>
+              Delete Selected
+            </Button>
+            <Button variant="outline" onClick={() => setSelectedPipelines([])}>
+              Clear Selection
+            </Button>
+          </div>
+        )}
 
         <ScrollArea className="flex-1 px-6">
           {filteredPipelines.length === 0 ? (
@@ -152,43 +227,101 @@ export const SavedPipelines = ({ pipelines, onLoad, onDelete, onClose }: SavedPi
               {filteredPipelines.map((pipeline) => (
                 <Card
                   key={pipeline.id}
-                  className="overflow-hidden transition-all hover:shadow-md cursor-pointer"
-                  onClick={() => onLoad(pipeline)}
+                  className={cn(
+                    "overflow-hidden transition-all hover:shadow-md cursor-pointer group relative",
+                    isMultiSelect && selectedPipelines.includes(pipeline.id) ? "border-2 border-primary" : ""
+                  )}
+                  onClick={() => handlePipelineClick(pipeline)}
                 >
+                  {isMultiSelect && (
+                    <div className="absolute top-2 left-2">
+                      {selectedPipelines.includes(pipeline.id) ? (
+                        <Check className="h-5 w-5 text-primary" />
+                      ) : (
+                        <div className="h-5 w-5 border rounded" />
+                      )}
+                    </div>
+                  )}
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-base truncate" title={pipeline.name}>
                         {pipeline.name}
                       </CardTitle>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete pipeline</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{pipeline.name}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => onDelete(pipeline.id)}
+                      <div className="flex gap-1">
+                        {onEdit && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-primary/80 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEdit(pipeline)
+                                  }}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit pipeline</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {onExport && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-accent/80 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onExport(pipeline)
+                                  }}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Export pipeline</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete pipeline</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{pipeline.name}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => onDelete(pipeline.id)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                     {pipeline.description && (
                       <CardDescription className="line-clamp-2 h-10">{pipeline.description}</CardDescription>
@@ -221,4 +354,3 @@ export const SavedPipelines = ({ pipelines, onLoad, onDelete, onClose }: SavedPi
     </div>
   )
 }
-
